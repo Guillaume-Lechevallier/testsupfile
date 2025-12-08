@@ -1,6 +1,7 @@
 # SUPFile mobile
 
-Application React Native (Expo Router) proposant une page de connexion moderne pour SUPFile.
+Application React Native (Expo Router) proposant une page de connexion moderne pour SUPFile et une prévisualisation de l'espace
+fichiers avec des données de démonstration.
 
 ## Prérequis
 - Node.js 18+ et npm
@@ -22,14 +23,22 @@ Arrêtez le serveur avec `Ctrl+C` une fois la compilation terminée.
 - `app/index.tsx` : écran de connexion principal.
 - `app/_layout.tsx` : configuration du Stack Expo Router (route d'accueil, onglets, modale).
 - `components/` : composants utilitaires fournis par le squelette Expo.
+- `app/files.tsx` : écran vitrine listant des fichiers/dossiers fictifs avec les icônes d'extensions.
 
-## Fonctionnalités de l'écran de connexion
+## Fonctionnalités
+### Écran de connexion
 - En-tête épuré avec icône de menu.
 - Logo SUPFile avec icône cloud.
 - Champs stylisés pour l'email et le mot de passe avec chevrons.
 - Bouton de connexion désactivé tant que le formulaire est incomplet.
+- Validation simple : les identifiants `admin` / `admin` redirigent vers l'explorateur de fichiers démo.
 - Alternative de connexion Google et invitation à l'inscription.
 - Barre de pied de page avec icônes de réseaux sociaux et liens légaux.
+
+### Explorateur de fichiers (données de test, aucun back-end)
+- Grille de dossiers et fichiers factices pour chaque type d'extension disponible dans `assets/icons`.
+- Barre de recherche statique et bouton de déconnexion (non fonctionnels, pour la mise en forme).
+- Barre latérale colorée rappelant la charte SUPFile.
 
 ## Back-end et base de données
 Ce dépôt ne contient pas d’API ni de base de données. Aucune migration n'est nécessaire (pas de `last_update.sql`).

@@ -11,6 +11,7 @@ import {
   View,
 } from 'react-native';
 import { Ionicons, MaterialIcons, FontAwesome } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 
 const brandColor = '#f76c63';
 const surfaceColor = '#f7f7f7';
@@ -63,8 +64,23 @@ function InputField({
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
   const isDisabled = useMemo(() => !email || !password, [email, password]);
+
+  const handleLogin = () => {
+    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedPassword = password.trim();
+
+    if (normalizedEmail === 'admin' && normalizedPassword === 'admin') {
+      setError(null);
+      router.push('/files');
+      return;
+    }
+
+    setError("Identifiants incorrects. Utilisez admin / admin pour l'accès démo.");
+  };
 
   const onExternalLinkPress = async (url: string) => {
     try {
@@ -114,9 +130,12 @@ export default function LoginScreen() {
           style={[styles.primaryButton, isDisabled && styles.primaryButtonDisabled]}
           disabled={isDisabled}
           accessibilityLabel="Connexion"
+          onPress={handleLogin}
         >
           <Text style={styles.primaryButtonText}>Connexion</Text>
         </Pressable>
+
+        {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
         <Text style={styles.orText}>Ou avec</Text>
 
@@ -260,6 +279,12 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: '700',
+  },
+  errorText: {
+    marginTop: 10,
+    color: '#ffe3e3',
+    textAlign: 'center',
+    fontWeight: '600',
   },
   orText: {
     color: '#f0f0f0',
