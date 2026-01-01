@@ -1,7 +1,7 @@
-# SUPFile mobile
+# SUPFile mobile + web
 
-Application React Native (Expo Router) proposant une page de connexion moderne pour SUPFile et une prévisualisation de l'espace
-fichiers avec des données de démonstration.
+Applications React Native (Expo Router) et React Web proposant une page de connexion moderne pour SUPFile et une
+prévisualisation de l'espace fichiers avec des données de démonstration.
 
 ## Prérequis
 - Node.js 18+ et npm
@@ -12,18 +12,32 @@ fichiers avec des données de démonstration.
 npm install
 ```
 
+Installez ensuite la version web :
+```bash
+cd web
+npm install
+```
+
 ## Lancement du front
-Lance un serveur web Expo afin de vérifier le rendu de l'écran de connexion :
+Lance un serveur web Expo afin de vérifier le rendu de l'écran de connexion mobile :
 ```bash
 npm run web -- --port 19006 --non-interactive --clear
 ```
 Arrêtez le serveur avec `Ctrl+C` une fois la compilation terminée.
 
+Lance l'équivalent web en React (Vite) :
+```bash
+cd web
+npm run dev -- --host 0.0.0.0 --port 5173
+```
+
 ## Structure
-- `app/index.tsx` : écran de connexion principal.
-- `app/_layout.tsx` : configuration du Stack Expo Router (route d'accueil, onglets, modale).
-- `components/` : composants utilitaires fournis par le squelette Expo.
-- `app/files.tsx` : écran vitrine listant des fichiers/dossiers fictifs avec les icônes d'extensions.
+- `mobile/app/index.tsx` : écran de connexion principal (Expo Router).
+- `mobile/app/_layout.tsx` : configuration du Stack Expo Router (route d'accueil, onglets, modale).
+- `mobile/components/` : composants utilitaires Expo.
+- `mobile/app/files.tsx` : écran vitrine listant des fichiers/dossiers fictifs avec les icônes d'extensions.
+- `web/src/screens/Login.tsx` : écran de connexion côté web.
+- `web/src/screens/Files.tsx` : vue web listant les fichiers/dossiers factices.
 
 ## Fonctionnalités
 ### Écran de connexion
@@ -39,6 +53,10 @@ Arrêtez le serveur avec `Ctrl+C` une fois la compilation terminée.
 - Grille de dossiers et fichiers factices pour chaque type d'extension disponible dans `assets/icons`.
 - Barre de recherche statique et bouton de déconnexion (non fonctionnels, pour la mise en forme).
 - Barre latérale colorée rappelant la charte SUPFile.
+
+### Équivalent web
+- Même logique de connexion (admin/admin) avec redirection vers `/files`.
+- Reprise des cartes, du fil d'Ariane et de la barre latérale au format web React.
 
 ## Back-end et base de données
 Ce dépôt ne contient pas d’API ni de base de données. Aucune migration n'est nécessaire (pas de `last_update.sql`).
