@@ -9,6 +9,7 @@ prévisualisation de l'espace fichiers avec des données de démonstration.
 
 ## Installation
 ```bash
+cd mobile
 npm install
 ```
 
@@ -21,6 +22,7 @@ npm install
 ## Lancement du front
 Lance un serveur web Expo afin de vérifier le rendu de l'écran de connexion mobile :
 ```bash
+cd mobile
 npm run web -- --port 19006 --non-interactive --clear
 ```
 Arrêtez le serveur avec `Ctrl+C` une fois la compilation terminée.
@@ -32,6 +34,7 @@ npm run dev -- --host 0.0.0.0 --port 5173
 ```
 
 ## Structure
+- `mobile/` : application Expo (package.json, app.json, tsconfig.json).
 - `mobile/app/index.tsx` : écran de connexion principal (Expo Router).
 - `mobile/app/_layout.tsx` : configuration du Stack Expo Router (route d'accueil, onglets, modale).
 - `mobile/components/` : composants utilitaires Expo.
