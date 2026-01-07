@@ -2,21 +2,30 @@ const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const authService = require('../services/authService');
 
-passport.use(new GoogleStrategy({
-    clientID: process.env.GOOGLE_CLIENT_ID,
-    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL: process.env.GOOGLE_CALLBACK_URL,
-    scope: ['profile', 'email']
-},
-    async (accessToken, refreshToken, profile, done) => {
-        try {
+const hasGoogleOAuth =
+    process.env.GOOGLE_CLIENT_ID &&
+    process.env.GOOGLE_CLIENT_SECRET &&
+    process.env.GOOGLE_CALLBACK_URL;
 
-            const user = await authService.findOrCreateOAuthUser(profile);
-            return done(null, user);
-        } catch (err) {
-            return done(err, false);
-        }
-    }));
+if (hasGoogleOAuth) {
+    passport.use(new GoogleStrategy({
+        clientID: process.env.GOOGLE_CLIENT_ID,
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+        callbackURL: process.env.GOOGLE_CALLBACK_URL,
+        scope: ['profile', 'email']
+    },
+        async (accessToken, refreshToken, profile, done) => {
+            try {
+
+                const user = await authService.findOrCreateOAuthUser(profile);
+                return done(null, user);
+            } catch (err) {
+                return done(err, false);
+            }
+        }));
+} else {
+    console.warn('Google OAuth désactivé : variables d’environnement manquantes.');
+}
 
 passport.serializeUser((user, done) => {
     done(null, user.id);

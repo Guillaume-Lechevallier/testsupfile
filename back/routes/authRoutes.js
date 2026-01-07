@@ -17,8 +17,9 @@ router.get('/google/callback',
     (req, res) => {
 
         const token = authController.generateTokenFromPassport(req.user);
+        const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
 
-        res.redirect(`http://localhost:3000/auth-success?token=${token}`);
+        res.redirect(`${clientUrl}/auth-success?token=${token}`);
 
     }
 );

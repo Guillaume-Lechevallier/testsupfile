@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
+  ActivityIndicator,
   Image,
   Pressable,
   SafeAreaView,
@@ -10,6 +11,9 @@ import {
   View,
 } from 'react-native';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { ApiError, apiRequest } from '../utils/api';
+import { clearAuthToken, getAuthToken } from '../utils/auth';
 
 const brandColor = '#f76c63';
 
@@ -26,26 +30,17 @@ const iconSources = {
 } as const;
 
 type FileCard = {
-  id: string;
+  id: number;
   name: string;
   type: keyof typeof iconSources | 'unknown';
   extension?: string;
 };
 
-const files: FileCard[] = [
-  { id: 'folder-1', name: 'Dossier 1', type: 'folder' },
-  { id: 'folder-2', name: 'Dossier 2', type: 'folder' },
-  { id: 'pdf-1', name: 'Dossier PDF', type: 'pdf', extension: 'pdf' },
-  { id: 'pdf-2', name: 'Fichier PDF 2', type: 'pdf', extension: 'pdf' },
-  { id: 'word-1', name: 'Compte rendu', type: 'word', extension: 'docx' },
-  { id: 'excel-1', name: 'Reporting trimestriel', type: 'excel', extension: 'xlsx' },
-  { id: 'archive-1', name: 'Sauvegarde compressée', type: 'archive', extension: 'zip' },
-  { id: 'image-1', name: 'Illustration HD', type: 'image', extension: 'png' },
-  { id: 'text-1', name: 'Notes techniques', type: 'text', extension: 'txt' },
-  { id: 'video-1', name: 'Présentation vidéo', type: 'video', extension: 'mp4' },
-  { id: 'unknown-1', name: 'Fichier avec une extension inconnue 1', type: 'unknown', extension: 'bin' },
-  { id: 'unknown-2', name: 'Fichier avec une extension inconnue 2', type: 'unknown', extension: 'bak' },
-];
+type ApiFileItem = {
+  id: number;
+  name: string;
+  is_folder: boolean;
+};
 
 const iconForType = (type: FileCard['type']) => {
   if (type in iconSources) {
@@ -54,7 +49,84 @@ const iconForType = (type: FileCard['type']) => {
   return iconSources.file;
 };
 
+const extensionMap: Record<string, FileCard['type']> = {
+  pdf: 'pdf',
+  doc: 'word',
+  docx: 'word',
+  odt: 'word',
+  xls: 'excel',
+  xlsx: 'excel',
+  csv: 'excel',
+  zip: 'archive',
+  rar: 'archive',
+  '7z': 'archive',
+  png: 'image',
+  jpg: 'image',
+  jpeg: 'image',
+  gif: 'image',
+  webp: 'image',
+  txt: 'text',
+  md: 'text',
+  mp4: 'video',
+  mov: 'video',
+  mkv: 'video',
+};
+
+const toCard = (item: ApiFileItem): FileCard => {
+  if (item.is_folder) {
+    return { id: item.id, name: item.name, type: 'folder' };
+  }
+  const extension = item.name.includes('.') ? item.name.split('.').pop()?.toLowerCase() : undefined;
+  const type = (extension && extensionMap[extension]) || 'unknown';
+  return { id: item.id, name: item.name, type, extension };
+};
+
 export default function FilesScreen() {
+  const [items, setItems] = useState<FileCard[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
+
+  useEffect(() => {
+    const token = getAuthToken();
+    if (!token) {
+      router.replace('/');
+      return;
+    }
+
+    const loadFiles = async () => {
+      try {
+        setIsLoading(true);
+        const data = await apiRequest<ApiFileItem[]>('/api/files', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        setItems(data.map(toCard));
+        setError(null);
+      } catch (err) {
+        if (err instanceof ApiError && err.status === 401) {
+          clearAuthToken();
+          router.replace('/');
+          return;
+        }
+        const message = err instanceof ApiError ? err.message : "Impossible de charger les fichiers.";
+        setError(message);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadFiles();
+  }, [router]);
+
+  const cards = useMemo(() => items.map((item) => ({ ...item, icon: iconForType(item.type) })), [items]);
+
+  const handleLogout = () => {
+    clearAuthToken();
+    router.replace('/');
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.wrapper}>
@@ -82,7 +154,7 @@ export default function FilesScreen() {
               />
             </View>
 
-            <Pressable style={styles.logoutButton} accessibilityLabel="Se déconnecter">
+            <Pressable style={styles.logoutButton} accessibilityLabel="Se déconnecter" onPress={handleLogout}>
               <Ionicons name="log-out-outline" size={24} color="#2d2d2d" />
             </Pressable>
           </View>
@@ -92,21 +164,28 @@ export default function FilesScreen() {
             <Text style={styles.breadcrumb}>Mes fichiers locaux • Dossier de test</Text>
           </View>
 
-          <View style={styles.grid}>
-            {files.map((item) => (
-              <View key={item.id} style={styles.card}>
-                <View style={styles.cardImageWrapper}>
-                  <Image source={iconForType(item.type)} style={styles.cardImage} resizeMode="contain" />
+          {isLoading ? <ActivityIndicator size="small" color={brandColor} /> : null}
+          {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
+          {!isLoading && !error && cards.length === 0 ? (
+            <Text style={styles.emptyText}>Aucun fichier disponible pour le moment.</Text>
+          ) : (
+            <View style={styles.grid}>
+              {cards.map((item) => (
+                <View key={item.id} style={styles.card}>
+                  <View style={styles.cardImageWrapper}>
+                    <Image source={item.icon} style={styles.cardImage} resizeMode="contain" />
+                  </View>
+                  <Text style={styles.cardName} numberOfLines={1}>
+                    {item.name}
+                  </Text>
+                  <Text style={styles.cardExtension}>
+                    {item.type === 'folder' ? 'DOSSIER' : (item.extension || 'inconnu').toUpperCase()}
+                  </Text>
                 </View>
-                <Text style={styles.cardName} numberOfLines={1}>
-                  {item.name}
-                </Text>
-                <Text style={styles.cardExtension}>
-                  {item.type === 'folder' ? 'DOSSIER' : (item.extension || 'inconnu').toUpperCase()}
-                </Text>
-              </View>
-            ))}
-          </View>
+              ))}
+            </View>
+          )}
         </ScrollView>
       </View>
     </SafeAreaView>
@@ -198,6 +277,15 @@ const styles = StyleSheet.create({
   breadcrumb: {
     color: '#7a7a7a',
     marginTop: 4,
+  },
+  errorText: {
+    color: '#d6362a',
+    marginBottom: 12,
+    fontWeight: '600',
+  },
+  emptyText: {
+    color: '#7a7a7a',
+    marginBottom: 12,
   },
   grid: {
     flexDirection: 'row',

@@ -12,6 +12,8 @@ import {
 } from 'react-native';
 import { Ionicons, MaterialIcons, FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { apiRequest, ApiError } from '../utils/api';
+import { setAuthToken } from '../utils/auth';
 
 const brandColor = '#f76c63';
 const surfaceColor = '#f7f7f7';
@@ -65,21 +67,61 @@ export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
   const isDisabled = useMemo(() => !email || !password, [email, password]);
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     const normalizedEmail = email.trim().toLowerCase();
     const normalizedPassword = password.trim();
 
-    if (normalizedEmail === 'admin' && normalizedPassword === 'admin') {
-      setError(null);
-      router.push('/files');
+    if (!normalizedEmail || !normalizedPassword) {
+      setError('Veuillez renseigner votre email et votre mot de passe.');
       return;
     }
 
-    setError("Identifiants incorrects. Utilisez admin / admin pour l'accès démo.");
+    try {
+      setIsLoading(true);
+      setError(null);
+      const data = await apiRequest<{ token: string }>('/api/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ email: normalizedEmail, password: normalizedPassword }),
+      });
+      setAuthToken(data.token);
+      router.push('/files');
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : "Impossible de se connecter pour l'instant.";
+      setError(message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleRegister = async () => {
+    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedPassword = password.trim();
+
+    if (!normalizedEmail || !normalizedPassword) {
+      setError('Veuillez renseigner votre email et votre mot de passe.');
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      setError(null);
+      const data = await apiRequest<{ token: string }>('/api/auth/register', {
+        method: 'POST',
+        body: JSON.stringify({ email: normalizedEmail, password: normalizedPassword }),
+      });
+      setAuthToken(data.token);
+      router.push('/files');
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : "Impossible de créer le compte pour l'instant.";
+      setError(message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const onExternalLinkPress = async (url: string) => {
@@ -128,11 +170,11 @@ export default function LoginScreen() {
 
         <Pressable
           style={[styles.primaryButton, isDisabled && styles.primaryButtonDisabled]}
-          disabled={isDisabled}
+          disabled={isDisabled || isLoading}
           accessibilityLabel="Connexion"
           onPress={handleLogin}
         >
-          <Text style={styles.primaryButtonText}>Connexion</Text>
+          <Text style={styles.primaryButtonText}>{isLoading ? 'Connexion…' : 'Connexion'}</Text>
         </Pressable>
 
         {error ? <Text style={styles.errorText}>{error}</Text> : null}
@@ -149,7 +191,7 @@ export default function LoginScreen() {
 
         <View style={styles.signupRow}>
           <Text style={styles.signupPrompt}>Vous n'avez pas de compte ?</Text>
-          <Pressable accessibilityLabel="S'inscrire">
+          <Pressable accessibilityLabel="S'inscrire" onPress={handleRegister} disabled={isDisabled || isLoading}>
             <Text style={styles.signupLink}>S'inscrire</Text>
           </Pressable>
         </View>
