@@ -247,6 +247,12 @@ button {
   padding: 24px;
 }
 
+.files-error {
+  margin: 12px 0 0;
+  color: #c0392b;
+  font-weight: 600;
+}
+
 .files-topbar {
   display: flex;
   align-items: center;

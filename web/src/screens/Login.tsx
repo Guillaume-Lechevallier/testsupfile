@@ -3,6 +3,8 @@ import { FaEllipsisH, FaFacebookSquare, FaGoogle, FaInstagram, FaYoutube } from 
 import { IoCloudUploadOutline } from 'react-icons/io5';
 import { MdChevronRight } from 'react-icons/md';
 import { useNavigate } from 'react-router-dom';
+import { ApiError } from '../api/client';
+import { login, register } from '../api/auth';
 
 const externalLinks = [
   { label: 'CGU/CGV', url: 'https://example.com/terms' },
@@ -14,21 +16,53 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   const isDisabled = useMemo(() => !email || !password, [email, password]);
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     const normalizedEmail = email.trim().toLowerCase();
     const normalizedPassword = password.trim();
 
-    if (normalizedEmail === 'admin' && normalizedPassword === 'admin') {
-      setError(null);
-      navigate('/files');
+    if (!normalizedEmail || !normalizedPassword) {
+      setError('Veuillez renseigner votre email et votre mot de passe.');
       return;
     }
 
-    setError("Identifiants incorrects. Utilisez admin / admin pour l'accès démo.");
+    try {
+      setIsLoading(true);
+      setError(null);
+      await login(normalizedEmail, normalizedPassword);
+      navigate('/files');
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : "Impossible de se connecter pour l'instant.";
+      setError(message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleRegister = async () => {
+    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedPassword = password.trim();
+
+    if (!normalizedEmail || !normalizedPassword) {
+      setError('Veuillez renseigner votre email et votre mot de passe.');
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      setError(null);
+      await register(normalizedEmail, normalizedPassword);
+      navigate('/files');
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : "Impossible de créer le compte pour l'instant.";
+      setError(message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const openExternal = (url: string) => {
@@ -84,8 +118,8 @@ export default function Login() {
         </label>
       </div>
 
-      <button className="primary-button" type="button" disabled={isDisabled} onClick={handleLogin}>
-        Connexion
+      <button className="primary-button" type="button" disabled={isDisabled || isLoading} onClick={handleLogin}>
+        {isLoading ? 'Connexion…' : 'Connexion'}
       </button>
 
       {error ? <p className="error-text">{error}</p> : null}
@@ -102,7 +136,7 @@ export default function Login() {
 
       <div className="signup-row">
         <span>Vous n'avez pas de compte ?</span>
-        <button type="button" className="text-link">
+        <button type="button" className="text-link" onClick={handleRegister} disabled={isDisabled || isLoading}>
           S'inscrire
         </button>
       </div>

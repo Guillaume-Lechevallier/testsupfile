@@ -14,7 +14,8 @@ const authRoutes = require('./routes/authRoutes');
 const fileRoutes = require('./routes/fileRoutes');
 const shareRoutes = require('./routes/shareRoutes');
 
-const PORT = process.env.PORT; 
+const PORT = process.env.PORT || 8080; 
+const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
 
 const app = express();
 
@@ -27,7 +28,7 @@ app.use(helmet({
 }));
 
 app.use(cors({
-    origin: process.env.CLIENT_URL,
+    origin: CLIENT_URL,
     credentials: true,
 }));
 
